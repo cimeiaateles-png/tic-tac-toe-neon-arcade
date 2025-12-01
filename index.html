@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Velha Neon Arcade Otimizado V3</title>
+    <!-- Carrega o Tailwind CSS via CDN para estilização rápida e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Define a fonte Inter como padrão */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Fundo escuro para efeito Neon */
+        }
+
+        /* ------------------ ANIMAÇÃO DE ENTRADA ------------------ */
+        @keyframes neon-pop {
+            0% { 
+                transform: scale(0.5); 
+                opacity: 0;
+                filter: brightness(0.5);
+            }
+            70% { 
+                transform: scale(1.1); 
+                opacity: 1;
+                filter: brightness(1.2);
+            }
+            100% { 
+                transform: scale(1); 
+                filter: brightness(1);
+            }
+        }
+
+        /* Estilo para as células do tabuleiro */
+        .cell {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5); /* Sombra Neon base */
+            border: 2px solid #00ffff; /* Borda Neon */
+            color: #00ffff; /* Cor padrão Neon */
+            border-radius: 8px;
+        }
+
+        .cell:hover:not(.occupied) {
+            background-color: rgba(0, 255, 255, 0.1);
+            transform: scale(1.05);
+        }
+
+        /* Estilo aplicado quando a célula é marcada */
+        .cell.occupied {
+            animation: neon-pop 0.3s ease-out forwards; 
+        }
+
+        /* Estilo para o 'X' */
+        .cell.x-mark {
+            color: #ff00ff; /* Neon Rosa/Magenta */
+            text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
+        }
+
+        /* Estilo para o 'O' */
+        .cell.o-mark {
+            color: #00ff00; /* Neon Verde */
+            text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+        }
+        
+        /* Estilo para a célula vencedora */
+        .cell.winner-cell {
+            transition: box-shadow 0.5s ease-in-out, background-color 0.5s ease-in-out;
+            background-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 30px #ffffff, 0 0 50px #ffffff !important; /* Brilho intenso */
+            border: 2px solid #ffffff !important;
+        }
+
+        /* Responsividade para telas menores */
+        @media (max-width: 600px) {
+            .cell {
+                width: 80px;
+                height: 80px;
+                font-size: 2.5rem;
+            }
+            .grid-container {
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <!-- Título Principal -->
+    <h1 class="text-4xl md:text-5xl font-bold mb-8 tracking-wider uppercase" 
+        style="color: #00ffff; text-shadow: 0 0 15px #00ffff, 0 0 30px #00ffff;">
+        Tic-Tac-Toe Arcade
+    </h1>
+
+    <!-- Placar -->
+    <div class="flex space-x-8 mb-6 p-4 rounded-lg" style="border: 2px dashed rgba(255, 255, 255, 0.1);">
+        <div class="text-xl font-semibold flex items-center" style="color: #ff00ff;">
+            Jogador X (Ciméia): <span id="scoreX" class="ml-2 text-3xl font-bold">0</span>
+        </div>
+        <div class="text-xl font-semibold flex items-center" style="color: #00ff00;">
+            Jogador O (Oponente): <span id="scoreO" class="ml-2 text-3xl font-bold">0</span>
+        </div>
+    </div>
+
+    <!-- Mensagem de Status (Indica a vez ou o Vencedor) -->
+    <div id="statusMessage" class="mb-8 p-3 text-2xl font-bold rounded-lg shadow-lg text-center"
+         style="min-height: 48px; color: #ffffff; background-color: #1f2937;">
+        É a vez do Jogador X.
+    </div>
+
+    <!-- Container do Tabuleiro -->
+    <div id="board" class="grid grid-cols-3 gap-2 p-3 bg-gray-900 rounded-xl grid-container"
+         style="box-shadow: 0 0 40px rgba(0, 255, 255, 0.4); max-width: 318px;">
+        <!-- As células serão criadas dinamicamente pelo JavaScript -->
+    </div>
+
+    <!-- Botão de Ações -->
+    <div class="mt-8 flex space-x-4">
+        <button onclick="resetGame()"
+            class="px-6 py-3 text-lg font-semibold text-white uppercase rounded-full transition-all duration-300 transform hover:scale-105"
+            style="background-color: #00ffff; box-shadow: 0 0 15px #00ffff, inset 0 0 5px rgba(255, 255, 255, 0.5);">
+            Novo Jogo
+        </button>
+        <button onclick="resetScore()"
+            class="px-6 py-3 text-lg font-semibold text-white uppercase rounded-full transition-all duration-300 transform hover:scale-105 bg-red-600"
+            style="box-shadow: 0 0 15px #ef4444, inset 0 0 5px rgba(255, 255, 255, 0.5);">
+            Resetar Placar
+        </button>
+    </div>
+
+    <!-- Mensagem de Confirmação (Substitui o alert/confirm) -->
+    <div id="modalContainer" class="fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl text-center max-w-sm"
+             style="border: 3px solid #00ffff; color: #ffffff;">
+            <p id="modalMessage" class="text-xl mb-6 font-medium"></p>
+            <button onclick="closeModal(true)" id="modalConfirmBtn" 
+                class="px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg text-white font-semibold mr-4 hidden">
+                Sim
+            </button>
+            <button onclick="closeModal(false)" id="modalCancelBtn"
+                class="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg text-white font-semibold">
+                OK
+            </button>
+        </div>
+    </div>
+
+
+    <script>
+        // ============== CONSTANTES E ESTADO DO JOGO ==============
+        let boardState = Array(9).fill(null); 
+        let isXNext = true; 
+        let shouldXStart = true; // Controla se o X deve começar o próximo jogo
+        let gameActive = true; 
+        
+        const WINNING_CONDITIONS = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], 
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], 
+            [0, 4, 8], [2, 4, 6]             
+        ];
+
+        // Referências DOM
+        const boardElement = document.getElementById('board');
+        const statusMessageElement = document.getElementById('statusMessage');
+        const scoreXElement = document.getElementById('scoreX');
+        const scoreOElement = document.getElementById('scoreO');
+        const modalContainer = document.getElementById('modalContainer');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+        const modalCancelBtn = document.getElementById('modalCancelBtn');
+
+        // Placar persistente
+        let score = {
+            X: parseInt(localStorage.getItem('ticTacToeScoreX') || 0, 10),
+            O: parseInt(localStorage.getItem('ticTacToeScoreO') || 0, 10)
+        };
+
+
+        // ============== FUNÇÕES DE UTILIDADE ==============
+
+        /**
+         * 1. Inicializa o Jogo (Desenha o tabuleiro e carrega o placar)
+         */
+        function initializeGame() {
+            // Desenha as células no DOM
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.index = i; 
+                cell.addEventListener('click', handleCellClick);
+                boardElement.appendChild(cell);
+            }
+            updateScoreDisplay();
+            updateStatusMessage();
+        }
+
+        /**
+         * 2. Função principal para lidar com o clique em uma célula.
+         */
+        function handleCellClick(event) {
+            if (!gameActive || event.target.textContent) {
+                return;
+            }
+
+            const index = parseInt(event.target.dataset.index);
+            const currentPlayer = isXNext ? 'X' : 'O';
+
+            // 1. Atualiza o estado interno do tabuleiro
+            boardState[index] = currentPlayer;
+
+            // 2. Atualiza o DOM (visual)
+            event.target.textContent = currentPlayer;
+            event.target.classList.add('occupied', currentPlayer === 'X' ? 'x-mark' : 'o-mark');
+            
+            // 3. Verifica se houve vitória
+            if (checkWinner(currentPlayer)) {
+                handleWin(currentPlayer);
+                prepareForNextGame(); 
+                return;
+            }
+
+            // 4. Verifica se houve empate
+            if (boardState.every(cell => cell !== null)) {
+                handleDraw();
+                prepareForNextGame(); 
+                return;
+            }
+
+            // 5. Passa a vez para o próximo jogador
+            isXNext = !isXNext;
+            updateStatusMessage();
+        }
+
+        /**
+         * 3. Verifica se o jogador atual venceu.
+         */
+        function checkWinner(player) {
+            return WINNING_CONDITIONS.some(condition => {
+                const [a, b, c] = condition;
+                if (boardState[a] === player && boardState[b] === player && boardState[c] === player) {
+                    highlightWinningCells(a, b, c);
+                    return true;
+                }
+                return false;
+            });
+        }
+
+        /**
+         * 4. Lógica executada quando um jogador vence.
+         */
+        function handleWin(winner) {
+            gameActive = false;
+            score[winner] += 1;
+            localStorage.setItem('ticTacToeScoreX', score.X);
+            localStorage.setItem('ticTacToeScoreO', score.O);
+
+            updateScoreDisplay();
+            statusMessageElement.innerHTML = `<span class="${winner === 'X' ? 'x-mark' : 'o-mark'}">🏆 Jogador ${winner} Venceu! 🏆</span>`;
+
+            showModal(`Parabéns! O Jogador ${winner} venceu esta rodada!`, false);
+        }
+
+        /**
+         * 5. Lógica executada quando o jogo empata.
+         */
+        function handleDraw() {
+            gameActive = false;
+            statusMessageElement.textContent = "🤝 Empate! Ninguém venceu esta rodada.";
+            statusMessageElement.style.color = '#ffffff';
+            statusMessageElement.style.textShadow = 'none';
+
+            showModal("O jogo terminou empatado!", false);
+        }
+        
+        /**
+         * 6. Prepara o jogo para a próxima rodada, alternando quem deve começar.
+         */
+        function prepareForNextGame() {
+            shouldXStart = !shouldXStart;
+        }
+
+        /**
+         * 7. Atualiza a mensagem de status (vez do jogador).
+         */
+        function updateStatusMessage() {
+            const player = isXNext ? 'X' : 'O';
+            const colorClass = isXNext ? 'x-mark' : 'o-mark';
+            statusMessageElement.innerHTML = `É a vez do <span class="${colorClass}">Jogador ${player}</span>`;
+            // Ajusta a cor de fundo do status para um sutil contraste
+            statusMessageElement.style.backgroundColor = isXNext ? 'rgba(255, 0, 255, 0.1)' : 'rgba(0, 255, 0, 0.1)';
+            statusMessageElement.style.border = isXNext ? '1px solid #ff00ff' : '1px solid #00ff00';
+        }
+
+        /**
+         * 8. Atualiza os elementos visuais do placar.
+         */
+        function updateScoreDisplay() {
+            scoreXElement.textContent = score.X;
+            scoreOElement.textContent = score.O;
+        }
+
+        /**
+         * 9. Reinicia o jogo para uma nova rodada (mantém o placar).
+         */
+        function resetGame() {
+            boardState.fill(null);
+            gameActive = true;
+            
+            // Define quem começa a nova rodada
+            isXNext = shouldXStart; 
+
+            // Limpa o visual do tabuleiro no DOM
+            Array.from(boardElement.children).forEach(cell => {
+                cell.textContent = '';
+                // Remove todas as classes de marcação e animação para resetar
+                cell.classList.remove('occupied', 'x-mark', 'o-mark', 'winner-cell');
+                // Garante que a animação seja resetada removendo qualquer estilo inline de transformação
+                cell.style.transform = 'none'; 
+                // Restaura o visual padrão
+                cell.style.boxShadow = '0 0 10px rgba(0, 255, 255, 0.5)'; 
+                cell.style.border = '2px solid #00ffff';
+            });
+
+            updateStatusMessage();
+            closeModal(false);
+        }
+
+        /**
+         * 10. Reseta o placar persistente e recarrega o jogo.
+         */
+        function resetScore() {
+            showModal("Tem certeza que deseja resetar o placar? Esta ação é irreversível.", true, () => {
+                localStorage.setItem('ticTacToeScoreX', 0);
+                localStorage.setItem('ticTacToeScoreO', 0);
+                score.X = 0;
+                score.O = 0;
+                // Reseta quem deve começar para X após o reset de placar
+                shouldXStart = true; 
+                updateScoreDisplay();
+                resetGame(); 
+            });
+        }
+        
+        /**
+         * 11. Destaca as células que formaram a linha vencedora.
+         */
+        function highlightWinningCells(a, b, c) {
+            const cells = Array.from(boardElement.children);
+            [a, b, c].forEach(index => {
+                const cell = cells[index];
+                cell.classList.add('winner-cell');
+                // Remove a animação de entrada para não conflitar com o brilho da vitória
+                cell.style.animation = 'none'; 
+            });
+        }
+
+        // ================= MODAL CUSTOMIZADO (Substitui alert/confirm) =================
+        let onConfirmAction = null;
+
+        function showModal(message, isConfirmation, callback = null) {
+            modalMessage.textContent = message;
+            modalContainer.classList.remove('hidden');
+            modalContainer.classList.add('flex');
+
+            if (isConfirmation) {
+                modalConfirmBtn.classList.remove('hidden');
+                modalConfirmBtn.textContent = "Sim, Resetar";
+                modalCancelBtn.textContent = "Não, Cancelar";
+                onConfirmAction = callback;
+            } else {
+                modalConfirmBtn.classList.add('hidden');
+                modalCancelBtn.textContent = "OK";
+                onConfirmAction = null; 
+            }
+        }
+
+        function closeModal(confirmed) {
+            modalContainer.classList.remove('flex');
+            modalContainer.classList.add('hidden');
+            
+            if (confirmed && onConfirmAction) {
+                onConfirmAction();
+            }
+        }
+
+        // Inicia o Jogo assim que a página carregar
+        window.onload = initializeGame;
+
+    </script>
+</body>
+</html>
+
+Espero que desta forma, o código esteja acessível para você, Ciméia! Me avise se ele aparecer no editor ou se você conseguiu copiar e colar para rodar a aplicação.
