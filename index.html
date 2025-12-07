@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo da Velha Neon Arcade - IA Inteligente</title>
+    <title>Jogo da Velha Neon Arcade - IA Inteligente Otimizada</title>
     <!-- Carrega Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Configuração do Tailwind para Cores Neon -->
@@ -129,7 +129,7 @@
         const startGameButton = document.getElementById('startGameButton');
         const errorMessage = document.getElementById('error-message');
 
-        // --- FUNÇÕES DE SETUP E UI (Inalteradas ou com ajustes mínimos) ---
+        // --- FUNÇÕES DE SETUP E UI ---
 
         function selectMode(mode) {
             gameMode = mode;
@@ -207,7 +207,6 @@
             player2Input.classList.add('hidden');
         }
         
-        // A função drawBoard e updateStatus permancem iguais na sua essência
         function drawBoard() {
             boardElement.innerHTML = '';
             board.forEach((cell, index) => {
@@ -223,7 +222,8 @@
                 }
                 cellElement.textContent = cell;
                 cellElement.dataset.index = index;
-                cellElement.addEventListener('click', () => handleCellClick(index));
+                // O listener de clique humano sempre chama handleCellClick sem o flag 'isAI'.
+                cellElement.addEventListener('click', () => handleCellClick(index)); 
                 boardElement.appendChild(cellElement);
             });
         }
@@ -233,9 +233,8 @@
             gameStatus.className = `text-2xl font-bold mb-6 h-8 ${colorClass === 'neon-blue' ? 'neon-text-blue' : colorClass === 'neon-pink' ? 'text-neon-pink' : 'text-white'}`;
         }
 
-        // --- LÓGICA DO JOGO (Com a nova IA) ---
+        // --- LÓGICA DO JOGO (COM MINIMAX + ALPHA-BETA OTIMIZADO) ---
 
-        // Condições de vitória, usada pela IA e pela verificação normal
         const winConditions = [
             [0, 1, 2], [3, 4, 5], [6, 7, 8],
             [0, 3, 6], [1, 4, 7], [2, 5, 8],
@@ -245,7 +244,6 @@
         /**
          * Verifica o estado atual do jogo.
          * @returns {string|null} - 'X', 'O', 'Empate' ou null.
-         * Esta função é a base para o Minimax.
          */
         function checkGameState(currentBoard) {
             for (let i = 0; i < winConditions.length; i++) {
@@ -262,7 +260,6 @@
 
         /**
          * Lógica de Verificação do Vencedor (para exibição no tabuleiro).
-         * Esta função usa checkGameState, mas adiciona o destaque visual no DOM.
          */
         function checkWinner() {
             const winner = checkGameState(board);
@@ -272,7 +269,8 @@
                     if (board[a] === winner && board[a] === board[b] && board[a] === board[c]) {
                         // Destaque a linha vencedora
                         [a, b, c].forEach(idx => {
-                            boardElement.children[idx].style.cssText = 'background-color: #3b82f6;'; 
+                            // Usando um background azul mais forte para o destaque
+                            boardElement.children[idx].style.cssText = `background-color: ${winner === 'X' ? '#3b82f6' : '#ec4899'}; transition: background-color 0.5s;`;
                         });
                         break;
                     }
@@ -282,15 +280,12 @@
         }
 
 
-        // --- ALGORITMO MINIMAX (O CORAÇÃO DA IA INTELIGENTE) ---
+        // --- ALGORITMO MINIMAX COM PODA ALPHA-BETA (OTIMIZAÇÃO) ---
 
         /**
-         * O Minimax é uma função recursiva que simula todos os possíveis movimentos futuros
-         * para encontrar o melhor caminho.
-         * - Maximiza (Computador 'O'): Tenta obter a maior pontuação (vitória).
-         * - Minimiza (Jogador 'X'): Tenta obter a menor pontuação (impedir a vitória da IA).
+         * O Minimax com Poda Alpha-Beta é uma versão mais rápida do Minimax.
          */
-        function minimax(tempBoard, depth, isMaximizing) {
+        function minimax(tempBoard, depth, isMaximizing, alpha, beta) {
             const result = checkGameState(tempBoard);
 
             if (result !== null) {
@@ -301,44 +296,62 @@
             }
 
             const availableSpots = tempBoard.map((val, idx) => val === '' ? idx : null).filter(val => val !== null);
+            let currentBestScore;
 
-            if (isMaximizing) { // Vez do Computador (O)
-                let bestScore = -Infinity;
+            if (isMaximizing) { // Vez do Computador (O) - Maximize
+                currentBestScore = -Infinity;
                 for (const index of availableSpots) {
                     tempBoard[index] = 'O';
-                    const score = minimax(tempBoard, depth + 1, false);
+                    const score = minimax(tempBoard, depth + 1, false, alpha, beta);
                     tempBoard[index] = ''; // Desfaz a jogada (backtracking)
-                    bestScore = Math.max(score, bestScore);
+                    
+                    currentBestScore = Math.max(score, currentBestScore);
+                    alpha = Math.max(alpha, currentBestScore); // Atualiza alpha
+                    
+                    if (beta <= alpha) { // PODA
+                        break;
+                    }
                 }
-                return bestScore;
-            } else { // Vez do Jogador (X)
-                let bestScore = Infinity;
+                return currentBestScore;
+            } else { // Vez do Jogador (X) - Minimize
+                currentBestScore = Infinity;
                 for (const index of availableSpots) {
                     tempBoard[index] = 'X';
-                    const score = minimax(tempBoard, depth + 1, true);
+                    const score = minimax(tempBoard, depth + 1, true, alpha, beta);
                     tempBoard[index] = ''; // Desfaz a jogada
-                    bestScore = Math.min(score, bestScore);
+                    
+                    currentBestScore = Math.min(score, currentBestScore);
+                    beta = Math.min(beta, currentBestScore); // Atualiza beta
+                    
+                    if (beta <= alpha) { // PODA
+                        break;
+                    }
                 }
-                return bestScore;
+                return currentBestScore;
             }
         }
 
         /**
-         * Encontra o melhor movimento chamando o Minimax para cada célula vazia.
+         * Encontra o melhor movimento chamando o Minimax.
          */
         function findBestMove() {
             let bestScore = -Infinity;
             let move = -1;
 
             const availableSpots = board.map((val, idx) => val === '' ? idx : null).filter(val => val !== null);
+            
+            // Cria uma cópia do tabuleiro para o Minimax trabalhar
+            const tempBoard = [...board]; 
 
             for (const index of availableSpots) {
                 // Tenta a jogada
-                board[index] = 'O'; 
-                // Calcula a pontuação dessa jogada, assumindo que o Jogador (X) fará o melhor contra
-                const score = minimax(board, 0, false); 
+                tempBoard[index] = 'O'; 
+                
+                // Calcula a pontuação dessa jogada. 
+                const score = minimax(tempBoard, 0, false, -Infinity, Infinity); 
+                
                 // Desfaz a jogada
-                board[index] = ''; 
+                tempBoard[index] = ''; 
 
                 if (score > bestScore) {
                     bestScore = score;
@@ -350,7 +363,6 @@
 
         /**
          * Manipula o movimento do Computador.
-         * (Agora usa findBestMove em vez de escolher aleatoriamente)
          */
         function handleComputerMove() {
             // Verifica se o jogo ainda está ativo e se é a vez do computador
@@ -360,39 +372,50 @@
             const bestMoveIndex = findBestMove();
             
             if (bestMoveIndex !== -1) {
-                handleCellClick(bestMoveIndex);
+                // Atraso de 300ms para que o usuário veja o movimento
+                // Passa 'true' para indicar que a chamada é da IA
+                setTimeout(() => handleCellClick(bestMoveIndex, true), 300); 
             }
         }
 
         /**
-         * Função principal chamada ao clicar em uma célula.
+         * Função principal chamada ao clicar em uma célula ou pela IA.
+         * @param {number} index - Índice da célula clicada/selecionada.
+         * @param {boolean} isAI - Flag para indicar se a jogada foi feita pela IA (default: false).
          */
-        function handleCellClick(index) {
-            // Se for 1P e não for a vez do Jogador, ignora o clique
-            if (!gameActive || board[index] !== '' || (gameMode === '1p' && currentPlayer === 'O')) {
+        function handleCellClick(index, isAI = false) {
+            
+            // 1. Condições de Bloqueio Básico: Se o jogo não está ativo ou a célula está ocupada.
+            if (!gameActive || board[index] !== '') {
                 return;
             }
+            
+            // 2. CORREÇÃO CRÍTICA: Impede o clique humano quando é a vez da IA (no modo 1P).
+            // Se for modo 1P, o jogador atual é 'O', e a chamada NÃO veio da IA (ou seja, é um clique humano),
+            // a jogada é bloqueada.
+            if (gameMode === '1p' && currentPlayer === 'O' && !isAI) {
+                return; 
+            }
 
-            // 1. Faz o movimento
+            // 3. Faz o movimento
             board[index] = currentPlayer;
             drawBoard(); 
 
-            // 2. Verifica o resultado
+            // 4. Verifica o resultado
             const result = checkWinner();
             if (result) {
                 handleResult(result);
                 return;
             }
 
-            // 3. Troca o jogador (ou chama a IA)
+            // 5. Troca o jogador (ou chama a IA)
             currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
             const nextPlayerName = currentPlayer === 'X' ? player1Name : player2Name;
             updateStatus(`É a vez de ${nextPlayerName} (${currentPlayer})`);
 
             // Se for modo 1P e for a vez do Computador, ele joga
             if (gameActive && gameMode === '1p' && currentPlayer === 'O') {
-                // Atraso para que o usuário veja o movimento
-                setTimeout(handleComputerMove, 700); 
+                handleComputerMove();
             }
         }
 
@@ -412,14 +435,14 @@
         // --- INICIALIZAÇÃO E EVENT LISTENERS ---
 
         window.onload = function() {
-            // Eventos da Tela de Configuração (Inalterados)
+            // Eventos da Tela de Configuração
             document.getElementById('mode1Player').addEventListener('click', () => selectMode('1p'));
             document.getElementById('mode2Players').addEventListener('click', () => selectMode('2p'));
             player1Input.addEventListener('input', checkStartButton);
             player2Input.addEventListener('input', checkStartButton);
             startGameButton.addEventListener('click', startGame);
 
-            // Eventos da Tela do Jogo (Inalterados)
+            // Eventos da Tela do Jogo
             document.getElementById('newGameButton').addEventListener('click', resetBoard);
             document.getElementById('changePlayersButton').addEventListener('click', goToSetup);
 
