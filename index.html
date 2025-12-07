@@ -1,401 +1,431 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo da Velha Neon Arcade Otimizado V3</title>
-    <!-- Carrega o Tailwind CSS via CDN para estilização rápida e responsiva -->
+    <title>Jogo da Velha Neon Arcade - IA Inteligente</title>
+    <!-- Carrega Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuração do Tailwind para Cores Neon -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'neon-blue': '#4a74ff',
+                        'neon-pink': '#ff4aff',
+                        'neon-bg': '#1a0d24',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        /* Define a fonte Inter como padrão */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0d1117; /* Fundo escuro para efeito Neon */
+        /* Estilo customizado para o brilho neon */
+        .neon-text-blue {
+            text-shadow: 0 0 5px #4a74ff, 0 0 10px #4a74ff, 0 0 20px #4a74ff;
+            color: #fff;
         }
-
-        /* ------------------ ANIMAÇÃO DE ENTRADA ------------------ */
-        @keyframes neon-pop {
-            0% { 
-                transform: scale(0.5); 
-                opacity: 0;
-                filter: brightness(0.5);
-            }
-            70% { 
-                transform: scale(1.1); 
-                opacity: 1;
-                filter: brightness(1.2);
-            }
-            100% { 
-                transform: scale(1); 
-                filter: brightness(1);
-            }
+        .neon-shadow-blue {
+            box-shadow: 0 0 10px #4a74ff;
         }
-
-        /* Estilo para as células do tabuleiro */
-        .cell {
-            width: 100px;
-            height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5); /* Sombra Neon base */
-            border: 2px solid #00ffff; /* Borda Neon */
-            color: #00ffff; /* Cor padrão Neon */
-            border-radius: 8px;
+        .neon-shadow-pink {
+            box-shadow: 0 0 10px #ff4aff;
         }
-
-        .cell:hover:not(.occupied) {
-            background-color: rgba(0, 255, 255, 0.1);
-            transform: scale(1.05);
+        .cell-glow-x {
+            color: #fff;
+            text-shadow: 0 0 8px #4a74ff, 0 0 15px #4a74ff;
         }
-
-        /* Estilo aplicado quando a célula é marcada */
-        .cell.occupied {
-            animation: neon-pop 0.3s ease-out forwards; 
-        }
-
-        /* Estilo para o 'X' */
-        .cell.x-mark {
-            color: #ff00ff; /* Neon Rosa/Magenta */
-            text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
-        }
-
-        /* Estilo para o 'O' */
-        .cell.o-mark {
-            color: #00ff00; /* Neon Verde */
-            text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
-        }
-        
-        /* Estilo para a célula vencedora */
-        .cell.winner-cell {
-            transition: box-shadow 0.5s ease-in-out, background-color 0.5s ease-in-out;
-            background-color: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 0 30px #ffffff, 0 0 50px #ffffff !important; /* Brilho intenso */
-            border: 2px solid #ffffff !important;
-        }
-
-        /* Responsividade para telas menores */
-        @media (max-width: 600px) {
-            .cell {
-                width: 80px;
-                height: 80px;
-                font-size: 2.5rem;
-            }
-            .grid-container {
-                max-width: 250px;
-            }
+        .cell-glow-o {
+            color: #fff;
+            text-shadow: 0 0 8px #ff4aff, 0 0 15px #ff4aff;
         }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen p-4">
+<body class="bg-neon-bg min-h-screen flex items-center justify-center p-4 font-sans text-white">
 
-    <!-- Título Principal -->
-    <h1 class="text-4xl md:text-5xl font-bold mb-8 tracking-wider uppercase" 
-        style="color: #00ffff; text-shadow: 0 0 15px #00ffff, 0 0 30px #00ffff;">
-        Tic-Tac-Toe Arcade
-    </h1>
+    <div id="appContainer" class="w-full max-w-lg mx-auto bg-gray-900/50 p-6 rounded-xl shadow-2xl">
 
-    <!-- Placar -->
-    <div class="flex space-x-8 mb-6 p-4 rounded-lg" style="border: 2px dashed rgba(255, 255, 255, 0.1);">
-        <div class="text-xl font-semibold flex items-center" style="color: #ff00ff;">
-            Jogador X (Ciméia): <span id="scoreX" class="ml-2 text-3xl font-bold">0</span>
-        </div>
-        <div class="text-xl font-semibold flex items-center" style="color: #00ff00;">
-            Jogador O (Oponente): <span id="scoreO" class="ml-2 text-3xl font-bold">0</span>
-        </div>
-    </div>
+        <!-- TELA DE CONFIGURAÇÃO (SETUP SCREEN) -->
+        <div id="setupScreen" class="text-center">
+            <h1 class="text-3xl font-extrabold mb-8 neon-text-blue">JOGO DA VELHA</h1>
+            <h2 class="text-xl mb-4 font-semibold text-gray-300">Escolha o Modo de Jogo</h2>
 
-    <!-- Mensagem de Status (Indica a vez ou o Vencedor) -->
-    <div id="statusMessage" class="mb-8 p-3 text-2xl font-bold rounded-lg shadow-lg text-center"
-         style="min-height: 48px; color: #ffffff; background-color: #1f2937;">
-        É a vez do Jogador X.
-    </div>
+            <!-- Botões de Seleção de Modo -->
+            <div class="flex flex-col space-y-4 mb-8">
+                <button id="mode1Player" class="p-4 rounded-lg bg-neon-blue/20 hover:bg-neon-blue/50 transition duration-300 neon-shadow-blue">
+                    <span class="font-bold">1 JOGADOR</span> (vs. Computador)
+                </button>
+                <button id="mode2Players" class="p-4 rounded-lg bg-neon-pink/20 hover:bg-neon-pink/50 transition duration-300 neon-shadow-pink">
+                    <span class="font-bold">2 JOGADORES</span> (Mesmo Dispositivo)
+                </button>
+            </div>
 
-    <!-- Container do Tabuleiro -->
-    <div id="board" class="grid grid-cols-3 gap-2 p-3 bg-gray-900 rounded-xl grid-container"
-         style="box-shadow: 0 0 40px rgba(0, 255, 255, 0.4); max-width: 318px;">
-        <!-- As células serão criadas dinamicamente pelo JavaScript -->
-    </div>
+            <!-- Formulário de Nomes -->
+            <div id="nameInputs" class="space-y-4">
+                <input type="text" id="player1Input" placeholder="Seu Nome (Jogador X)" class="w-full p-3 rounded-md bg-gray-800 border-2 border-neon-blue text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-neon-blue" maxlength="15">
+                <input type="text" id="player2Input" placeholder="Nome do Oponente (Jogador O)" class="w-full p-3 rounded-md bg-gray-800 border-2 border-neon-pink text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-neon-pink hidden" maxlength="15">
+            </div>
 
-    <!-- Botão de Ações -->
-    <div class="mt-8 flex space-x-4">
-        <button onclick="resetGame()"
-            class="px-6 py-3 text-lg font-semibold text-white uppercase rounded-full transition-all duration-300 transform hover:scale-105"
-            style="background-color: #00ffff; box-shadow: 0 0 15px #00ffff, inset 0 0 5px rgba(255, 255, 255, 0.5);">
-            Novo Jogo
-        </button>
-        <button onclick="resetScore()"
-            class="px-6 py-3 text-lg font-semibold text-white uppercase rounded-full transition-all duration-300 transform hover:scale-105 bg-red-600"
-            style="box-shadow: 0 0 15px #ef4444, inset 0 0 5px rgba(255, 255, 255, 0.5);">
-            Resetar Placar
-        </button>
-    </div>
-
-    <!-- Mensagem de Confirmação (Substitui o alert/confirm) -->
-    <div id="modalContainer" class="fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-50 hidden">
-        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl text-center max-w-sm"
-             style="border: 3px solid #00ffff; color: #ffffff;">
-            <p id="modalMessage" class="text-xl mb-6 font-medium"></p>
-            <button onclick="closeModal(true)" id="modalConfirmBtn" 
-                class="px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg text-white font-semibold mr-4 hidden">
-                Sim
+            <button id="startGameButton" class="mt-8 w-full p-3 text-lg font-bold rounded-lg bg-green-600 hover:bg-green-700 transition duration-300 shadow-md hover:shadow-lg focus:outline-none disabled:opacity-50" disabled>
+                INICIAR JOGO
             </button>
-            <button onclick="closeModal(false)" id="modalCancelBtn"
-                class="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg text-white font-semibold">
-                OK
-            </button>
+            <p id="error-message" class="text-red-500 mt-3 hidden">Por favor, insira o nome dos jogadores.</p>
         </div>
-    </div>
 
+        <!-- TELA DO JOGO (GAME SCREEN) -->
+        <div id="gameScreen" class="hidden text-center">
+            <h1 class="text-2xl font-bold mb-4">Placar</h1>
+            <div class="flex justify-around mb-6 text-xl">
+                <div id="player1ScoreDisplay" class="p-2 rounded-lg bg-neon-blue/20 neon-shadow-blue flex-1 mx-2">
+                    <span id="player1Name" class="font-bold">X</span> (X): 0
+                </div>
+                <div id="player2ScoreDisplay" class="p-2 rounded-lg bg-neon-pink/20 neon-shadow-pink flex-1 mx-2">
+                    <span id="player2Name" class="font-bold">O</span> (O): 0
+                </div>
+            </div>
+
+            <!-- Mensagem de Status/Resultado -->
+            <p id="gameStatus" class="text-2xl font-bold mb-6 h-8"></p>
+
+            <!-- Tabuleiro -->
+            <div id="board" class="grid grid-cols-3 aspect-square max-w-xs mx-auto border-4 border-white/50 rounded-lg">
+                <!-- Células serão preenchidas por JS -->
+            </div>
+
+            <!-- Botões de Ação -->
+            <div class="mt-8 flex justify-center space-x-4">
+                <button id="newGameButton" class="p-3 text-base font-semibold rounded-lg bg-yellow-600 hover:bg-yellow-700 transition duration-300">
+                    Reiniciar (Mesmos Jogadores)
+                </button>
+                <button id="changePlayersButton" class="p-3 text-base font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition duration-300">
+                    Mudar Jogadores/Modo
+                </button>
+            </div>
+        </div>
+
+    </div>
 
     <script>
-        // ============== CONSTANTES E ESTADO DO JOGO ==============
-        let boardState = Array(9).fill(null); 
-        let isXNext = true; 
-        let shouldXStart = true; // Controla se o X deve começar o próximo jogo
-        let gameActive = true; 
+        // Variáveis Globais de Estado do Jogo (State Management)
+        let gameMode = null; // '1p' ou '2p'
+        let player1Name = 'Jogador X';
+        let player2Name = 'Jogador O';
+        let currentPlayer = 'X';
+        let board = Array(9).fill(''); // Matriz de estado do tabuleiro: 0, 1, 2, ...
+        let gameActive = false;
+        let scores = { 'X': 0, 'O': 0 };
+
+        // Elementos do DOM
+        const setupScreen = document.getElementById('setupScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const boardElement = document.getElementById('board');
+        const gameStatus = document.getElementById('gameStatus');
+        const player1Input = document.getElementById('player1Input');
+        const player2Input = document.getElementById('player2Input');
+        const startGameButton = document.getElementById('startGameButton');
+        const errorMessage = document.getElementById('error-message');
+
+        // --- FUNÇÕES DE SETUP E UI (Inalteradas ou com ajustes mínimos) ---
+
+        function selectMode(mode) {
+            gameMode = mode;
+            const btn1p = document.getElementById('mode1Player');
+            const btn2p = document.getElementById('mode2Players');
+            btn1p.classList.remove('ring-4', 'ring-white/80');
+            btn2p.classList.remove('ring-4', 'ring-white/80');
+
+            if (mode === '1p') {
+                player2Input.classList.add('hidden');
+                player2Input.value = 'Computador';
+                btn1p.classList.add('ring-4', 'ring-white/80');
+                player1Input.placeholder = "Seu Nome (Você é X)";
+            } else { // 2p
+                player2Input.classList.remove('hidden');
+                player2Input.value = '';
+                btn2p.classList.add('ring-4', 'ring-white/80');
+                player1Input.placeholder = "Nome do Jogador 1 (X)";
+                player2Input.placeholder = "Nome do Jogador 2 (O)";
+            }
+            checkStartButton();
+        }
+
+        function checkStartButton() {
+            const p1 = player1Input.value.trim();
+            const p2 = player2Input.value.trim();
+            
+            if (gameMode === '1p' && p1) {
+                startGameButton.disabled = false;
+            } else if (gameMode === '2p' && p1 && p2) {
+                startGameButton.disabled = false;
+            } else {
+                startGameButton.disabled = true;
+            }
+            errorMessage.classList.add('hidden');
+        }
+
+        function startGame() {
+            player1Name = player1Input.value.trim() || 'Jogador X';
+            player2Name = (gameMode === '1p') ? 'Computador' : (player2Input.value.trim() || 'Jogador O');
+
+            if (gameMode === '2p' && (player1Name.toLowerCase() === player2Name.toLowerCase())) {
+                errorMessage.textContent = "Os nomes dos jogadores não podem ser iguais!";
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            document.getElementById('player1Name').textContent = player1Name;
+            document.getElementById('player2Name').textContent = player2Name;
+            document.getElementById('player1ScoreDisplay').innerHTML = `<span class="font-bold">${player1Name}</span> (X): ${scores['X']}`;
+            document.getElementById('player2ScoreDisplay').innerHTML = `<span class="font-bold">${player2Name}</span> (O): ${scores['O']}`;
+
+            setupScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+
+            resetBoard();
+        }
+
+        function resetBoard() {
+            board.fill('');
+            gameActive = true;
+            currentPlayer = 'X';
+            drawBoard();
+            updateStatus(`É a vez de ${player1Name} (X)`);
+        }
+
+        function goToSetup() {
+            setupScreen.classList.remove('hidden');
+            gameScreen.classList.add('hidden');
+            gameMode = null;
+            scores = { 'X': 0, 'O': 0 };
+            document.getElementById('mode1Player').classList.remove('ring-4', 'ring-white/80');
+            document.getElementById('mode2Players').classList.remove('ring-4', 'ring-white/80');
+            startGameButton.disabled = true;
+            player2Input.classList.add('hidden');
+        }
         
-        const WINNING_CONDITIONS = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8], 
-            [0, 3, 6], [1, 4, 7], [2, 5, 8], 
-            [0, 4, 8], [2, 4, 6]             
+        // A função drawBoard e updateStatus permancem iguais na sua essência
+        function drawBoard() {
+            boardElement.innerHTML = '';
+            board.forEach((cell, index) => {
+                const cellElement = document.createElement('div');
+                cellElement.classList.add(
+                    'flex', 'items-center', 'justify-center', 'text-4xl', 'font-extrabold',
+                    'border-2', 'border-white/20', 'cursor-pointer', 'transition-all', 'duration-150', 'hover:bg-gray-800/50'
+                );
+                if (cell === 'X') {
+                    cellElement.classList.add('cell-glow-x');
+                } else if (cell === 'O') {
+                    cellElement.classList.add('cell-glow-o');
+                }
+                cellElement.textContent = cell;
+                cellElement.dataset.index = index;
+                cellElement.addEventListener('click', () => handleCellClick(index));
+                boardElement.appendChild(cellElement);
+            });
+        }
+
+        function updateStatus(message, colorClass = 'text-white') {
+            gameStatus.textContent = message;
+            gameStatus.className = `text-2xl font-bold mb-6 h-8 ${colorClass === 'neon-blue' ? 'neon-text-blue' : colorClass === 'neon-pink' ? 'text-neon-pink' : 'text-white'}`;
+        }
+
+        // --- LÓGICA DO JOGO (Com a nova IA) ---
+
+        // Condições de vitória, usada pela IA e pela verificação normal
+        const winConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
         ];
 
-        // Referências DOM
-        const boardElement = document.getElementById('board');
-        const statusMessageElement = document.getElementById('statusMessage');
-        const scoreXElement = document.getElementById('scoreX');
-        const scoreOElement = document.getElementById('scoreO');
-        const modalContainer = document.getElementById('modalContainer');
-        const modalMessage = document.getElementById('modalMessage');
-        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
-        const modalCancelBtn = document.getElementById('modalCancelBtn');
-
-        // Placar persistente
-        let score = {
-            X: parseInt(localStorage.getItem('ticTacToeScoreX') || 0, 10),
-            O: parseInt(localStorage.getItem('ticTacToeScoreO') || 0, 10)
-        };
-
-
-        // ============== FUNÇÕES DE UTILIDADE ==============
-
         /**
-         * 1. Inicializa o Jogo (Desenha o tabuleiro e carrega o placar)
+         * Verifica o estado atual do jogo.
+         * @returns {string|null} - 'X', 'O', 'Empate' ou null.
+         * Esta função é a base para o Minimax.
          */
-        function initializeGame() {
-            // Desenha as células no DOM
-            for (let i = 0; i < 9; i++) {
-                const cell = document.createElement('div');
-                cell.classList.add('cell');
-                cell.dataset.index = i; 
-                cell.addEventListener('click', handleCellClick);
-                boardElement.appendChild(cell);
-            }
-            updateScoreDisplay();
-            updateStatusMessage();
-        }
-
-        /**
-         * 2. Função principal para lidar com o clique em uma célula.
-         */
-        function handleCellClick(event) {
-            if (!gameActive || event.target.textContent) {
-                return;
-            }
-
-            const index = parseInt(event.target.dataset.index);
-            const currentPlayer = isXNext ? 'X' : 'O';
-
-            // 1. Atualiza o estado interno do tabuleiro
-            boardState[index] = currentPlayer;
-
-            // 2. Atualiza o DOM (visual)
-            event.target.textContent = currentPlayer;
-            event.target.classList.add('occupied', currentPlayer === 'X' ? 'x-mark' : 'o-mark');
-            
-            // 3. Verifica se houve vitória
-            if (checkWinner(currentPlayer)) {
-                handleWin(currentPlayer);
-                prepareForNextGame(); 
-                return;
-            }
-
-            // 4. Verifica se houve empate
-            if (boardState.every(cell => cell !== null)) {
-                handleDraw();
-                prepareForNextGame(); 
-                return;
-            }
-
-            // 5. Passa a vez para o próximo jogador
-            isXNext = !isXNext;
-            updateStatusMessage();
-        }
-
-        /**
-         * 3. Verifica se o jogador atual venceu.
-         */
-        function checkWinner(player) {
-            return WINNING_CONDITIONS.some(condition => {
-                const [a, b, c] = condition;
-                if (boardState[a] === player && boardState[b] === player && boardState[c] === player) {
-                    highlightWinningCells(a, b, c);
-                    return true;
+        function checkGameState(currentBoard) {
+            for (let i = 0; i < winConditions.length; i++) {
+                const [a, b, c] = winConditions[i];
+                if (currentBoard[a] && currentBoard[a] === currentBoard[b] && currentBoard[a] === currentBoard[c]) {
+                    return currentBoard[a]; // Retorna 'X' ou 'O'
                 }
-                return false;
-            });
+            }
+            if (!currentBoard.includes('')) {
+                return 'Empate';
+            }
+            return null;
         }
 
         /**
-         * 4. Lógica executada quando um jogador vence.
+         * Lógica de Verificação do Vencedor (para exibição no tabuleiro).
+         * Esta função usa checkGameState, mas adiciona o destaque visual no DOM.
          */
-        function handleWin(winner) {
-            gameActive = false;
-            score[winner] += 1;
-            localStorage.setItem('ticTacToeScoreX', score.X);
-            localStorage.setItem('ticTacToeScoreO', score.O);
+        function checkWinner() {
+            const winner = checkGameState(board);
+            if (winner && winner !== 'Empate') {
+                for (let i = 0; i < winConditions.length; i++) {
+                    const [a, b, c] = winConditions[i];
+                    if (board[a] === winner && board[a] === board[b] && board[a] === board[c]) {
+                        // Destaque a linha vencedora
+                        [a, b, c].forEach(idx => {
+                            boardElement.children[idx].style.cssText = 'background-color: #3b82f6;'; 
+                        });
+                        break;
+                    }
+                }
+            }
+            return winner;
+        }
 
-            updateScoreDisplay();
-            statusMessageElement.innerHTML = `<span class="${winner === 'X' ? 'x-mark' : 'o-mark'}">🏆 Jogador ${winner} Venceu! 🏆</span>`;
 
-            showModal(`Parabéns! O Jogador ${winner} venceu esta rodada!`, false);
+        // --- ALGORITMO MINIMAX (O CORAÇÃO DA IA INTELIGENTE) ---
+
+        /**
+         * O Minimax é uma função recursiva que simula todos os possíveis movimentos futuros
+         * para encontrar o melhor caminho.
+         * - Maximiza (Computador 'O'): Tenta obter a maior pontuação (vitória).
+         * - Minimiza (Jogador 'X'): Tenta obter a menor pontuação (impedir a vitória da IA).
+         */
+        function minimax(tempBoard, depth, isMaximizing) {
+            const result = checkGameState(tempBoard);
+
+            if (result !== null) {
+                // Pontuação: +10 para vitória da IA, -10 para vitória do Jogador, 0 para empate.
+                if (result === 'O') return 10 - depth; // Vitoria da IA (Otimiza movimentos mais rápidos)
+                if (result === 'X') return -10 + depth; // Vitoria do Jogador
+                return 0; // Empate
+            }
+
+            const availableSpots = tempBoard.map((val, idx) => val === '' ? idx : null).filter(val => val !== null);
+
+            if (isMaximizing) { // Vez do Computador (O)
+                let bestScore = -Infinity;
+                for (const index of availableSpots) {
+                    tempBoard[index] = 'O';
+                    const score = minimax(tempBoard, depth + 1, false);
+                    tempBoard[index] = ''; // Desfaz a jogada (backtracking)
+                    bestScore = Math.max(score, bestScore);
+                }
+                return bestScore;
+            } else { // Vez do Jogador (X)
+                let bestScore = Infinity;
+                for (const index of availableSpots) {
+                    tempBoard[index] = 'X';
+                    const score = minimax(tempBoard, depth + 1, true);
+                    tempBoard[index] = ''; // Desfaz a jogada
+                    bestScore = Math.min(score, bestScore);
+                }
+                return bestScore;
+            }
         }
 
         /**
-         * 5. Lógica executada quando o jogo empata.
+         * Encontra o melhor movimento chamando o Minimax para cada célula vazia.
          */
-        function handleDraw() {
-            gameActive = false;
-            statusMessageElement.textContent = "🤝 Empate! Ninguém venceu esta rodada.";
-            statusMessageElement.style.color = '#ffffff';
-            statusMessageElement.style.textShadow = 'none';
+        function findBestMove() {
+            let bestScore = -Infinity;
+            let move = -1;
 
-            showModal("O jogo terminou empatado!", false);
-        }
-        
-        /**
-         * 6. Prepara o jogo para a próxima rodada, alternando quem deve começar.
-         */
-        function prepareForNextGame() {
-            shouldXStart = !shouldXStart;
-        }
+            const availableSpots = board.map((val, idx) => val === '' ? idx : null).filter(val => val !== null);
 
-        /**
-         * 7. Atualiza a mensagem de status (vez do jogador).
-         */
-        function updateStatusMessage() {
-            const player = isXNext ? 'X' : 'O';
-            const colorClass = isXNext ? 'x-mark' : 'o-mark';
-            statusMessageElement.innerHTML = `É a vez do <span class="${colorClass}">Jogador ${player}</span>`;
-            // Ajusta a cor de fundo do status para um sutil contraste
-            statusMessageElement.style.backgroundColor = isXNext ? 'rgba(255, 0, 255, 0.1)' : 'rgba(0, 255, 0, 0.1)';
-            statusMessageElement.style.border = isXNext ? '1px solid #ff00ff' : '1px solid #00ff00';
+            for (const index of availableSpots) {
+                // Tenta a jogada
+                board[index] = 'O'; 
+                // Calcula a pontuação dessa jogada, assumindo que o Jogador (X) fará o melhor contra
+                const score = minimax(board, 0, false); 
+                // Desfaz a jogada
+                board[index] = ''; 
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    move = index;
+                }
+            }
+            return move;
         }
 
         /**
-         * 8. Atualiza os elementos visuais do placar.
+         * Manipula o movimento do Computador.
+         * (Agora usa findBestMove em vez de escolher aleatoriamente)
          */
-        function updateScoreDisplay() {
-            scoreXElement.textContent = score.X;
-            scoreOElement.textContent = score.O;
-        }
+        function handleComputerMove() {
+            // Verifica se o jogo ainda está ativo e se é a vez do computador
+            if (!gameActive || currentPlayer !== 'O') return; 
 
-        /**
-         * 9. Reinicia o jogo para uma nova rodada (mantém o placar).
-         */
-        function resetGame() {
-            boardState.fill(null);
-            gameActive = true;
+            // A IA calcula e faz sua jogada
+            const bestMoveIndex = findBestMove();
             
-            // Define quem começa a nova rodada
-            isXNext = shouldXStart; 
-
-            // Limpa o visual do tabuleiro no DOM
-            Array.from(boardElement.children).forEach(cell => {
-                cell.textContent = '';
-                // Remove todas as classes de marcação e animação para resetar
-                cell.classList.remove('occupied', 'x-mark', 'o-mark', 'winner-cell');
-                // Garante que a animação seja resetada removendo qualquer estilo inline de transformação
-                cell.style.transform = 'none'; 
-                // Restaura o visual padrão
-                cell.style.boxShadow = '0 0 10px rgba(0, 255, 255, 0.5)'; 
-                cell.style.border = '2px solid #00ffff';
-            });
-
-            updateStatusMessage();
-            closeModal(false);
+            if (bestMoveIndex !== -1) {
+                handleCellClick(bestMoveIndex);
+            }
         }
 
         /**
-         * 10. Reseta o placar persistente e recarrega o jogo.
+         * Função principal chamada ao clicar em uma célula.
          */
-        function resetScore() {
-            showModal("Tem certeza que deseja resetar o placar? Esta ação é irreversível.", true, () => {
-                localStorage.setItem('ticTacToeScoreX', 0);
-                localStorage.setItem('ticTacToeScoreO', 0);
-                score.X = 0;
-                score.O = 0;
-                // Reseta quem deve começar para X após o reset de placar
-                shouldXStart = true; 
-                updateScoreDisplay();
-                resetGame(); 
-            });
+        function handleCellClick(index) {
+            // Se for 1P e não for a vez do Jogador, ignora o clique
+            if (!gameActive || board[index] !== '' || (gameMode === '1p' && currentPlayer === 'O')) {
+                return;
+            }
+
+            // 1. Faz o movimento
+            board[index] = currentPlayer;
+            drawBoard(); 
+
+            // 2. Verifica o resultado
+            const result = checkWinner();
+            if (result) {
+                handleResult(result);
+                return;
+            }
+
+            // 3. Troca o jogador (ou chama a IA)
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            const nextPlayerName = currentPlayer === 'X' ? player1Name : player2Name;
+            updateStatus(`É a vez de ${nextPlayerName} (${currentPlayer})`);
+
+            // Se for modo 1P e for a vez do Computador, ele joga
+            if (gameActive && gameMode === '1p' && currentPlayer === 'O') {
+                // Atraso para que o usuário veja o movimento
+                setTimeout(handleComputerMove, 700); 
+            }
         }
-        
-        /**
-         * 11. Destaca as células que formaram a linha vencedora.
-         */
-        function highlightWinningCells(a, b, c) {
-            const cells = Array.from(boardElement.children);
-            [a, b, c].forEach(index => {
-                const cell = cells[index];
-                cell.classList.add('winner-cell');
-                // Remove a animação de entrada para não conflitar com o brilho da vitória
-                cell.style.animation = 'none'; 
-            });
-        }
 
-        // ================= MODAL CUSTOMIZADO (Substitui alert/confirm) =================
-        let onConfirmAction = null;
-
-        function showModal(message, isConfirmation, callback = null) {
-            modalMessage.textContent = message;
-            modalContainer.classList.remove('hidden');
-            modalContainer.classList.add('flex');
-
-            if (isConfirmation) {
-                modalConfirmBtn.classList.remove('hidden');
-                modalConfirmBtn.textContent = "Sim, Resetar";
-                modalCancelBtn.textContent = "Não, Cancelar";
-                onConfirmAction = callback;
+        function handleResult(result) {
+            gameActive = false;
+            if (result === 'Empate') {
+                updateStatus('FIM DE JOGO: Deu Empate!');
             } else {
-                modalConfirmBtn.classList.add('hidden');
-                modalCancelBtn.textContent = "OK";
-                onConfirmAction = null; 
+                const winnerName = (result === 'X') ? player1Name : player2Name;
+                updateStatus(`VITÓRIA! ${winnerName} (${result}) ganhou!`, result === 'X' ? 'neon-blue' : 'neon-pink');
+                scores[result]++;
+                document.getElementById('player1ScoreDisplay').innerHTML = `<span class="font-bold">${player1Name}</span> (X): ${scores['X']}`;
+                document.getElementById('player2ScoreDisplay').innerHTML = `<span class="font-bold">${player2Name}</span> (O): ${scores['O']}`;
             }
         }
 
-        function closeModal(confirmed) {
-            modalContainer.classList.remove('flex');
-            modalContainer.classList.add('hidden');
-            
-            if (confirmed && onConfirmAction) {
-                onConfirmAction();
-            }
-        }
+        // --- INICIALIZAÇÃO E EVENT LISTENERS ---
 
-        // Inicia o Jogo assim que a página carregar
-        window.onload = initializeGame;
+        window.onload = function() {
+            // Eventos da Tela de Configuração (Inalterados)
+            document.getElementById('mode1Player').addEventListener('click', () => selectMode('1p'));
+            document.getElementById('mode2Players').addEventListener('click', () => selectMode('2p'));
+            player1Input.addEventListener('input', checkStartButton);
+            player2Input.addEventListener('input', checkStartButton);
+            startGameButton.addEventListener('click', startGame);
+
+            // Eventos da Tela do Jogo (Inalterados)
+            document.getElementById('newGameButton').addEventListener('click', resetBoard);
+            document.getElementById('changePlayersButton').addEventListener('click', goToSetup);
+
+            goToSetup();
+        };
 
     </script>
 </body>
 </html>
-
-Espero que desta forma, o código esteja acessível para você, Ciméia! Me avise se ele aparecer no editor ou se você conseguiu copiar e colar para rodar a aplicação.
