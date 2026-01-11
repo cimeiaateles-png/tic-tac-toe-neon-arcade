@@ -31,11 +31,12 @@ Tailwind CSS: Framework de utilitários para estilização rápida, moderna e re
 JavaScript (ES6+): Manipulação do DOM, lógica de estados do jogo e o motor da IA.
 
 🚀 Como Executar
-1. Clone o repositório:
+## 🎮 Demonstração
+Você pode testar o jogo agora mesmo através do link abaixo:
 
-Bash
+Clique aqui para jogar o Neon Arcade 
 
-git clone https://github.com/SEU-USUARIO/neon-arcade.git
+https://cimeiaateles-png.github.io/tic-tac-toe-neon-arcade/
 
 Abra o arquivo index.html em qualquer navegador moderno.
 
