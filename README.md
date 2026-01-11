@@ -1,17 +1,42 @@
-Neon Arcade - Mais que um simples Jogo da Velha ✨
+🕹️ Neon Arcade - Inteligência Artificial Imbatível
+Este projeto representa um marco fundamental na minha Jornada de Autonomia e Transformação. Mais do que um simples "Jogo da Velha", este repositório é o resultado de um desafio técnico focado em lógica de programação, design responsivo e implementação de algoritmos de decisão.
 
-Como parte da minha transformação e busca por autonomia técnica, desenvolvi este projeto focado em lógica de programação avançada. O visual neon foi inspirado nos antigos arcades, mas o verdadeiro destaque está "sob o capô".
+🧠 O Coração do Projeto: IA com Algoritmo Minimax
+O grande diferencial deste projeto é o modo 1 Jogador. Nele, implementei uma IA que utiliza o algoritmo Minimax com otimização de Poda Alpha-Beta.
 
-Implementei uma Inteligência Artificial imbatível. Usei o algoritmo Minimax com poda Alpha-Beta para garantir que o computador jogue de forma estratégica e eficiente. Foi um desafio técnico que me permitiu entender melhor como estruturar decisões complexas em JavaScript.
+O que isso significa? A IA não joga de forma aleatória. Ela simula todas as jogadas possíveis até o final da partida, atribuindo pontuações para cada cenário.
 
-Destaques:
+Imbatibilidade: Graças à recursividade do Minimax, o computador sempre escolherá a jogada que maximiza suas chances de vitória e minimiza as do jogador humano.
 
-Modos 1P (vs IA) e 2P (Local).
-Placar dinâmico e interface sem alertas chatos.
-Design 100% responsivo e fluido.
+Desafio: Se você conseguir um empate contra esta IA, você executou uma partida perfeita!
 
-Feito por Ciméia. 🚀
-Dê um git clone neste repositório.
-Abra o arquivo index.html em qualquer navegador.
+✨ Funcionalidades e Experiência do Usuário (UX)
+Para transformar um código simples em um produto real, foquei nos seguintes pontos:
 
-Feito por Ciméia.
+Estética Arcade/Neon: Utilização de sombras projetadas e brilho textual via Tailwind CSS para criar uma atmosfera de fliperama dos anos 80.
+
+Modos de Jogo Dinâmicos: Alternância fluida entre o modo contra a máquina e o modo local para dois jogadores.
+
+Sistema de Placar Real-time: Persistência de dados durante a sessão para acompanhar o desempenho dos jogadores.
+
+Design Responsivo: Interface totalmente adaptável, garantindo jogabilidade perfeita tanto em dispositivos móveis quanto em desktops.
+
+Feedback Visual: Substituição de alertas invasivos por uma barra de status dinâmica que orienta o jogador sobre o próximo turno ou o resultado final.
+
+🛠️ Stack Tecnológica
+HTML5: Estruturação semântica do DOM.
+
+Tailwind CSS: Framework de utilitários para estilização rápida, moderna e responsiva.
+
+JavaScript (ES6+): Manipulação do DOM, lógica de estados do jogo e o motor da IA.
+
+🚀 Como Executar
+1. Clone o repositório:
+
+Bash
+
+git clone https://github.com/SEU-USUARIO/neon-arcade.git
+
+Abra o arquivo index.html em qualquer navegador moderno.
+
+Desenvolvido com foco em excelência técnica por Ciméia.
