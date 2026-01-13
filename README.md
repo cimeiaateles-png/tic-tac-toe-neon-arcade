@@ -2,7 +2,7 @@
 Este projeto representa um marco fundamental na minha Jornada de Autonomia e Transformação. Mais do que um simples "Jogo da Velha", este repositório é o resultado de um desafio técnico focado em lógica de programação, design responsivo e implementação de algoritmos de decisão.
 
 🧠 O Coração do Projeto: IA com Algoritmo Minimax
-O grande diferencial deste projeto é o modo 1 Jogador. Nele, implementei uma IA que utiliza o algoritmo Minimax com otimização de Poda Alpha-Beta.
+O grande diferencial deste projeto é o modo 1 Jogador x Máquina (IA). Nele, implementei uma IA que utiliza o algoritmo Minimax com otimização de Poda Alpha-Beta.
 
 O que isso significa? A IA não joga de forma aleatória. Ela simula todas as jogadas possíveis até o final da partida, atribuindo pontuações para cada cenário.
 
